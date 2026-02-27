@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dyads Player</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: #a78bfa;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.05em;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: #16213e;
+      border: 1px solid #2d3561;
+      border-radius: 1rem;
+      padding: 2rem;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .control-group {
+      margin-bottom: 1.4rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+
+    select {
+      width: 100%;
+      padding: 0.65rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid #2d3561;
+      background: #0f3460;
+      color: #e0e0e0;
+      font-size: 1rem;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23a78bfa' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+    }
+
+    select:focus { outline: 2px solid #a78bfa; }
+
+    .dyad-display {
+      background: #0f3460;
+      border-radius: 0.75rem;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.05rem;
+    }
+
+    .dyad-display .notes {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #a78bfa;
+      letter-spacing: 0.1em;
+    }
+
+    .dyad-display .interval-name {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      text-align: right;
+    }
+
+    .dyad-display .semitones {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    .btn-play {
+      width: 100%;
+      padding: 0.85rem;
+      border: none;
+      border-radius: 0.6rem;
+      background: linear-gradient(135deg, #7c3aed, #a78bfa);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn-play:hover { opacity: 0.9; }
+    .btn-play:active { transform: scale(0.98); }
+    .btn-play:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .waveform-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .waveform-btn {
+      flex: 1;
+      padding: 0.45rem 0;
+      border-radius: 0.4rem;
+      border: 1px solid #2d3561;
+      background: #0f3460;
+      color: #94a3b8;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .waveform-btn.active {
+      background: #7c3aed;
+      color: #fff;
+      border-color: #7c3aed;
+    }
+
+    .interval-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .interval-btn {
+      padding: 0.6rem 0.3rem;
+      border-radius: 0.5rem;
+      border: 1px solid #2d3561;
+      background: #0f3460;
+      color: #e0e0e0;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s, border-color 0.15s;
+      line-height: 1.3;
+    }
+
+    .interval-btn:hover { background: #1e3a6e; border-color: #a78bfa; }
+    .interval-btn .short { font-size: 1rem; font-weight: 700; color: #a78bfa; display: block; }
+
+    footer {
+      margin-top: 2rem;
+      color: #475569;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎵 Dyads Player</h1>
+  <p class="subtitle">Play any two-note interval in your browser</p>
+
+  <div class="card">
+    <div class="control-group">
+      <label for="rootNote">Root Note</label>
+      <select id="rootNote"></select>
+    </div>
+
+    <div class="control-group">
+      <label for="interval">Interval</label>
+      <select id="interval"></select>
+    </div>
+
+    <div class="control-group">
+      <label>Waveform</label>
+      <div class="waveform-row" id="waveformRow">
+        <button class="waveform-btn active" data-wave="sine">Sine</button>
+        <button class="waveform-btn" data-wave="triangle">Triangle</button>
+        <button class="waveform-btn" data-wave="square">Square</button>
+        <button class="waveform-btn" data-wave="sawtooth">Sawtooth</button>
+      </div>
+    </div>
+
+    <div class="dyad-display" id="dyadDisplay">
+      <div class="notes" id="dyadNotes">C4 + C4</div>
+      <div>
+        <div class="interval-name" id="dyadIntervalName">Unison</div>
+        <div class="semitones" id="dyadSemitones">0 semitones</div>
+      </div>
+    </div>
+
+    <button class="btn-play" id="playBtn">▶ Play Dyad</button>
+
+    <div>
+      <label style="margin-top:1.5rem; display:block;">Quick-play all intervals from root</label>
+      <div class="interval-grid" id="intervalGrid"></div>
+    </div>
+  </div>
+
+  <footer>Uses the Web Audio API — no external dependencies</footer>
+
+  <script>
+    const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const OCTAVES = [3, 4, 5]; // note range: C3 – B5
+
+    const INTERVALS = [
+      { name: 'Unison',       short: 'P1',  semitones: 0  },
+      { name: 'Minor 2nd',    short: 'm2',  semitones: 1  },
+      { name: 'Major 2nd',    short: 'M2',  semitones: 2  },
+      { name: 'Minor 3rd',    short: 'm3',  semitones: 3  },
+      { name: 'Major 3rd',    short: 'M3',  semitones: 4  },
+      { name: 'Perfect 4th',  short: 'P4',  semitones: 5  },
+      { name: 'Tritone',      short: 'TT',  semitones: 6  },
+      { name: 'Perfect 5th',  short: 'P5',  semitones: 7  },
+      { name: 'Minor 6th',    short: 'm6',  semitones: 8  },
+      { name: 'Major 6th',    short: 'M6',  semitones: 9  },
+      { name: 'Minor 7th',    short: 'm7',  semitones: 10 },
+      { name: 'Major 7th',    short: 'M7',  semitones: 11 },
+      { name: 'Octave',       short: 'P8',  semitones: 12 },
+    ];
+
+    // MIDI note number → frequency (A4 = 69 = 440 Hz)
+    function midiToFreq(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    function noteToMidi(note, octave) {
+      return NOTES.indexOf(note) + (octave + 1) * 12;
+    }
+
+    function noteName(midi) {
+      const oct = Math.floor(midi / 12) - 1;
+      const name = NOTES[midi % 12];
+      return name + oct;
+    }
+
+    // Populate root note select
+    const rootNoteEl = document.getElementById('rootNote');
+    OCTAVES.forEach(oct => {
+      NOTES.forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = noteToMidi(n, oct);
+        opt.textContent = n + oct;
+        if (n === 'C' && oct === 4) opt.selected = true;
+        rootNoteEl.appendChild(opt);
+      });
+    });
+
+    // Populate interval select
+    const intervalEl = document.getElementById('interval');
+    INTERVALS.forEach((iv, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `${iv.short} — ${iv.name} (${iv.semitones} st)`;
+      intervalEl.appendChild(opt);
+    });
+
+    // Build quick-play interval grid
+    const gridEl = document.getElementById('intervalGrid');
+    INTERVALS.forEach((iv, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'interval-btn';
+      btn.dataset.intervalIndex = i;
+      btn.innerHTML = `<span class="short">${iv.short}</span>${iv.name}`;
+      btn.addEventListener('click', () => {
+        intervalEl.value = i;
+        updateDisplay();
+        playDyad();
+      });
+      gridEl.appendChild(btn);
+    });
+
+    // Waveform selection
+    let waveform = 'sine';
+    document.getElementById('waveformRow').addEventListener('click', e => {
+      const btn = e.target.closest('.waveform-btn');
+      if (!btn) return;
+      document.querySelectorAll('.waveform-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      waveform = btn.dataset.wave;
+    });
+
+    function updateDisplay() {
+      const rootMidi = parseInt(rootNoteEl.value);
+      const iv = INTERVALS[parseInt(intervalEl.value)];
+      const upperMidi = rootMidi + iv.semitones;
+      document.getElementById('dyadNotes').textContent = `${noteName(rootMidi)} + ${noteName(upperMidi)}`;
+      document.getElementById('dyadIntervalName').textContent = iv.name;
+      document.getElementById('dyadSemitones').textContent =
+        iv.semitones === 0 ? 'Same note' : `${iv.semitones} semitone${iv.semitones !== 1 ? 's' : ''}`;
+    }
+
+    rootNoteEl.addEventListener('change', updateDisplay);
+    intervalEl.addEventListener('change', updateDisplay);
+    updateDisplay();
+
+    // Audio context (created lazily to comply with autoplay policy)
+    let audioCtx = null;
+
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTone(ctx, freq, startTime, duration) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = waveform;
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      // Smooth envelope: short attack, sustain, short release
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.25, startTime + 0.02);
+      gain.gain.setValueAtTime(0.25, startTime + duration - 0.08);
+      gain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    }
+
+    function playDyad() {
+      const ctx = getAudioCtx();
+      const rootMidi = parseInt(rootNoteEl.value);
+      const iv = INTERVALS[parseInt(intervalEl.value)];
+      const upperMidi = rootMidi + iv.semitones;
+
+      const now = ctx.currentTime;
+      const duration = 1.5;
+
+      playTone(ctx, midiToFreq(rootMidi), now, duration);
+      if (iv.semitones !== 0) {
+        playTone(ctx, midiToFreq(upperMidi), now, duration);
+      }
+    }
+
+    document.getElementById('playBtn').addEventListener('click', playDyad);
+  </script>
+</body>
+</html>
